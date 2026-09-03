@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✨ Ultimate Raid Planner Hub ✨</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: #06060c;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 夢幻背景動態流光 */
+        .bg-glow-1 {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: linear-gradient(135deg, #ff758c, #ff7eb3);
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.35;
+            top: -15%;
+            left: -15%;
+            animation: moveGlow1 12s ease-in-out infinite alternate;
+            z-index: 0;
+        }
+
+        .bg-glow-2 {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: linear-gradient(135deg, #00c6ff, #0072ff);
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.35;
+            bottom: -15%;
+            right: -15%;
+            animation: moveGlow2 15s ease-in-out infinite alternate;
+            z-index: 0;
+        }
+
+        @keyframes moveGlow1 {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(80px, 60px) scale(1.2); }
+        }
+
+        @keyframes moveGlow2 {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(-80px, -60px) scale(1.2); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 460px;
+            background: rgba(16, 16, 26, 0.75);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 35px;
+            padding: 45px 30px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            text-align: center;
+            animation: containerPop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes containerPop {
+            from { opacity: 0; transform: scale(0.9) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* 💖 簡約版 Q 萌系標誌核心 (移除狗掌、文字，專注展示表情) */
+        .super-q-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 24px auto;
+            border-radius: 50%;
+            /* 粉嫩漸變底色 */
+            background: radial-gradient(circle at 30% 30%, #fff 5%, #fff5f8 15%, #ffd6e8 50%, #ff7eb3 90%);
+            border: 4px solid #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 0 30px rgba(255, 117, 140, 0.7), inset 0 5px 15px rgba(255, 255, 255, 0.9), inset 0 -10px 25px rgba(255, 126, 179, 0.5);
+            animation: rainbowBorder 4s linear infinite, bounceAvatar 3s ease-in-out infinite;
+        }
+
+        /* 這裡是原本有狗掌 ::before/::after 的地方，現在已經全部移除 */
+
+        @keyframes rainbowBorder {
+            0% { border-color: #ff758c; }
+            33% { border-color: #00c6ff; }
+            66% { border-color: #ff7eb3; }
+            100% { border-color: #ff758c; }
+        }
+
+        @keyframes bounceAvatar {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* (｡◕∀◕｡) 表情核心 (修正置中，帶眨眼動態) */
+        .q-face {
+            font-size: 28px; /* 縮小字體令佢完美安坐喺圓圈入面 */
+            letter-spacing: 0.5px;
+            filter: drop-shadow(0 2px 5px rgba(255, 105, 180, 0.6));
+            display: flex;
+            gap: 2px;
+            margin-top: -3px; /* 微調垂直位置，因為無咗 tag 所以可以置中啲 */
+            animation: faceBlink 4s infinite;
+            color: #0c0f1d;
+        }
+
+        /* 眨眼動畫 */
+        @keyframes faceBlink {
+            0%, 48%, 52%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* 這裡是原本有 q-tag 的地方，現在已經全部移除 */
+
+        h1 {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff 30%, #ffcce6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
+            letter-spacing: 1.5px;
+        }
+
+        p.subtitle {
+            color: #a0aec0;
+            font-size: 13.5px;
+            margin-bottom: 30px;
+        }
+
+        .card-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 18px 24px;
+            border-radius: 20px;
+            text-decoration: none;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* 對應 Raid 資料夾入面嘅專屬小圖示 */
+        .card-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255, 126, 179, 0.6);
+            background: #1a1a2e;
+            box-shadow: 0 0 10px rgba(255, 117, 140, 0.3);
+        }
+
+        .card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 20px;
+            border: 2px solid transparent;
+            background: linear-gradient(45deg, #ff7eb3, #00c6ff) border-box;
+            -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: destination-out;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .card:hover::after {
+            opacity: 1;
+        }
+
+        .card:hover {
+            background: rgba(255, 117, 140, 0.12);
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 10px 30px rgba(255, 117, 140, 0.35);
+        }
+
+        .card span.arrow {
+            color: #ff7eb3;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover span.arrow {
+            transform: translateX(6px);
+        }
+
+        footer {
+            margin-top: 30px;
+            font-size: 11.5px;
+            color: rgba(255, 255, 255, 0.4);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+
+    <div class="container">
+        <!-- 💖 簡約版 Q 萌系標誌 (已移除狗掌、KAWAII字) -->
+        <div class="super-q-icon">
+            <!-- (｡◕∀◕｡) 表情核心，帶眨眼動態 -->
+            <div class="q-face">
+                <span>(｡◕</span>
+                <span style="margin-top: 0px;">∀</span>
+                <span>◕｡)</span>
+            </div>
+            <!-- 這裡是原本有 q-tag 的地方，現在已經全部移除 -->
+        </div>
+
+        <h1>Raid Planner Hub</h1>
+        <p class="subtitle">✦</p>
+        
+        <div class="card-list">
+            <!-- Arma 按鈕 + 讀取 IMG/Raid Seal/Giant Arma.png -->
+            <a href="Arma.html" class="card">
+                <div class="card-left">
+                    <img src="IMG/Raid Seal/Giant Arma.png" alt="Arma" class="card-icon">
+                    <span>Arma Planner</span>
+                </div>
+                <span class="arrow">&rarr;</span>
+            </a>
+
+            <!-- Nezarun 按鈕 + 讀取 IMG/Raid Seal/Nezarun.png -->
+            <a href="Nezarun.html" class="card">
+                <div class="card-left">
+                    <img src="IMG/Raid Seal/Nezarun.png" alt="Nezarun" class="card-icon">
+                    <span>Nezarun Planner</span>
+                </div>
+                <span class="arrow">&rarr;</span>
+            </a>
+
+            <!-- Yertirand 按鈕 + 讀取 IMG/Raid Seal/Yertirand.png -->
+            <a href="Yertirand.html" class="card">
+                <div class="card-left">
+                    <img src="IMG/Raid Seal/Yertirand.png" alt="Yertirand" class="card-icon">
+                    <span>Yertirand Planner</span>
+                </div>
+                <span class="arrow">&rarr;</span>
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>
