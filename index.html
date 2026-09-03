@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raid Planner</title>
+    <!-- 引入 Jason 字型 -->
+    <link href="https://fonts.googleapis.com/css2?family=Jason&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden; /* 鎖死外層，防止整個網頁碌動 */
+        }
+
+        body {
+            font-family: "Jason", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: #06060c;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* 🌟 背景連線特效 Canvas 層 */
+        #constellation-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 1; /* 處於背景流光之上、內容之下 */
+        }
+
+        /* 夢幻背景動態流光 */
+        .bg-glow-1 {
+            position: absolute;
+            width: 650px;
+            height: 650px;
+            background: linear-gradient(135deg, #ff758c, #ff7eb3);
+            border-radius: 50%;
+            filter: blur(150px);
+            opacity: 0.35;
+            top: -15%;
+            left: -15%;
+            animation: moveGlow1 12s ease-in-out infinite alternate;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .bg-glow-2 {
+            position: absolute;
+            width: 650px;
+            height: 650px;
+            background: linear-gradient(135deg, #00c6ff, #0072ff);
+            border-radius: 50%;
+            filter: blur(150px);
+            opacity: 0.35;
+            bottom: -15%;
+            right: -15%;
+            animation: moveGlow2 15s ease-in-out infinite alternate;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        @keyframes moveGlow1 {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(80px, 60px) scale(1.2); }
+        }
+
+        @keyframes moveGlow2 {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(-80px, -60px) scale(1.2); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 2; /* 確保主容器在連線之上可點擊 */
+            width: 100%;
+            max-width: 580px;
+            max-height: 92vh; 
+            background: rgba(16, 16, 26, 0.85);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-radius: 40px;
+            padding: 40px 32px;
+            box-shadow: 0 30px 65px rgba(0, 0, 0, 0.85), 
+                        0 0 30px rgba(255, 117, 140, 0.15), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            text-align: center;
+            animation: containerPop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            display: block; 
+        }
+
+        /* 幫主容器加上幻彩流光邊框 */
+        .container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 40px;
+            padding: 2px;
+            background: linear-gradient(135deg, #ff7eb3, #00c6ff, #ff758c);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: destination-out;
+            mask-composite: exclude;
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        @keyframes containerPop {
+            from { opacity: 0; transform: scale(0.9) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* 🌟 星空微光水晶球標誌 */
+        .super-q-icon {
+            width: 92px;
+            height: 92px;
+            margin: 0 auto 16px auto;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #2d1b4e 0%, #150f28 70%, #0a0612 100%);
+            border: 2px solid rgba(255, 126, 179, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 0 25px rgba(255, 117, 140, 0.4), inset 0 0 15px rgba(0, 198, 255, 0.3);
+            animation: floatIcon 4s ease-in-out infinite;
+        }
+
+        @keyframes floatIcon {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .q-face {
+            font-size: 21px;
+            color: #ff7eb3;
+            filter: drop-shadow(0 0 8px rgba(255, 126, 179, 0.8));
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff 30%, #ffcce6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            letter-spacing: 1.8px;
+        }
+
+        /* 副標題區域 */
+        .subtitle-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .subtitle-line {
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 126, 179, 0.4), transparent);
+        }
+
+        p.subtitle {
+            color: #ff7eb3;
+            font-size: 12px;
+            letter-spacing: 2.2px;
+            text-transform: uppercase;
+            opacity: 0.85;
+            filter: drop-shadow(0 0 5px rgba(255, 126, 179, 0.5));
+        }
+
+        /* 雙欄格狀清單 (Grid) */
+        .card-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 8px;
+            max-height: 54vh; 
+            overflow-y: auto;
+            padding: 6px;
+        }
+
+        /* 自定義捲軸樣式 */
+        .card-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .card-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 126, 179, 0.3);
+            border-radius: 4px;
+        }
+
+        /* 卡片設計 */
+        .card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 20px 14px;
+            border-radius: 22px;
+            text-decoration: none;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+            text-align: center;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+            transition: border-color 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        /* 卡片內追光層 */
+        .card .spotlight {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(
+                450px circle at var(--mouse-x) var(--mouse-y),
+                rgba(255, 117, 140, 0.22),
+                rgba(0, 198, 255, 0.08) 40%,
+                transparent 80%
+            );
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .card:hover .spotlight {
+            opacity: 1;
+        }
+
+        .card-left {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 11px;
+            z-index: 2;
+            transform: translateZ(20px);
+        }
+
+        .card-icon {
+            width: 66px;
+            height: 66px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255, 126, 179, 0.6);
+            background: #1a1a2e;
+            box-shadow: 0 0 12px rgba(255, 117, 140, 0.38);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover .card-icon {
+            transform: scale(1.08) translateZ(10px);
+        }
+
+        .card-text-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 22px;
+            border: 2px solid transparent;
+            background: linear-gradient(45deg, #ff7eb3, #00c6ff) border-box;
+            -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: destination-out;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .card:hover::after {
+            opacity: 1;
+        }
+
+        .card:hover {
+            border-color: rgba(255, 117, 140, 0.4);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 117, 140, 0.25);
+        }
+    </style>
+</head>
+<body>
+    <!-- 🌟 背景動態連線特效畫布 -->
+    <canvas id="constellation-canvas"></canvas>
+
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+    <div class="container">
+        <!-- 🌟 星空微光水晶球標誌 -->
+        <div class="super-q-icon">
+            <div class="q-face">(｡♥‿♥｡)</div>
+        </div>
+        <h1>Raid Planner</h1>
+        
+        <!-- 裝飾性副標題行 -->
+        <div class="subtitle-box">
+            <div class="subtitle-line"></div>
+            <p class="subtitle">Select Mission</p>
+            <div class="subtitle-line"></div>
+        </div>
+
+        <div class="card-list">
+            <a href="Arma.html" class="card">
+                <div class="spotlight"></div>
+                <div class="card-left">
+                    <img src="IMG/Raid Seal/Giant Arma.png" alt="Arma" class="card-icon">
+                    <div class="card-text-group">
+                        <span class="card-title">Arma</span>
+                    </div>
+                </div>
+            </a>
+            <a href="Nezarun.html" class="card">
+                <div class="spotlight"></div>
+                <div class="card-left">
+                    <img src="IMG/Raid Seal/Nezarun.png" alt="Nezarun" class="card-icon">
+                    <div class="card-text-group">
+                        <span class="card-title">Nezarun</span>
+                    </div>
+                </div>
+            </a>
+            <a href="Yertirand.html" class="card">
+                <div class="spotlight"></div>
+                <div class="card-left">
+                    <img src="IMG/Raid Seal/Yertirand.png" alt="Yertirand" class="card-icon">
+                    <div class="card-text-group">
+                        <span class="card-title">Yertirand</span>
+                    </div>
+                </div>
+            </a>
+            <a href="Dr Dimensio.html" class="card">
+                <div class="spotlight"></div>
+                <div class="card-left">
+                    <img src="IMG/Raid Seal/Anomalous Nezarun.png" alt="Dr Dimensio" class="card-icon">
+                    <div class="card-text-group">
+                        <span class="card-title">Dr Dimensio</span>
+                    </div>
+                </div>
+            </a>
+            <a href="Crusher.html" class="card">
+                <div class="spotlight"></div>
+                <div class="card-left">
+                    <img src="IMG/Raid Seal/Crusher Nezarun.png" alt="Crusher" class="card-icon">
+                    <div class="card-text-group">
+                        <span class="card-title">Crusher</span>
+                    </div>
+                </div>
+            </a>
+            <a href="Paimon.html" class="card">
+                <div class="spotlight"></div>
+                <div class="card-left">
+                    <img src="IMG/Raid Seal/Paimon.png" alt="Paimon" class="card-icon">
+                    <div class="card-text-group">
+                        <span class="card-title">Paimon</span>
+                    </div>
+                </div>
+            </a>
+            <a href="Alzanor.html" class="card">
+                <div class="spotlight"></div>
+                <div class="card-left">
+                    <img src="IMG/Raid Seal/Ice Dragon Alzanor.png" alt="Alzanor" class="card-icon">
+                    <div class="card-text-group">
+                        <span class="card-title">Alzanor</span>
+                    </div>
+                </div>
+            </a>
+            <a href="Valehir.html" class="card">
+                <div class="spotlight"></div>
+                <div class="card-left">
+                    <img src="IMG/Raid Seal/Zombie Dragon Valehir.png" alt="Valehir" class="card-icon">
+                    <div class="card-text-group">
+                        <span class="card-title">Valehir</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- JS: 動態連線特效 + 卡片 3D 效果 -->
+    <script>
+        // 1. 動態滑鼠網狀連線特效 (Constellation Effect)
+        const canvas = document.getElementById('constellation-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        });
+
+        // 記錄滑鼠位置
+        const mouse = {
+            x: null,
+            y: null,
+            radius: 150 // 連線有效距離
+        };
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        window.addEventListener('mouseout', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
+
+        // 建立背景粒子
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 1;
+                this.vy = (Math.random() - 0.5) * 1;
+                this.size = Math.random() * 2 + 1;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if (this.x < 0 || this.x > width) this.vx = -this.vx;
+                if (this.y < 0 || this.y > height) this.vy = -this.vy;
+            }
+
+            draw() {
+                ctx.fillStyle = 'rgba(255, 126, 179, 0.5)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        const particlesArray = [];
+        const numberOfParticles = Math.floor((width * height) / 18000); // 隨螢幕大小自動調整粒子數量
+
+        for (let i = 0; i < numberOfParticles; i++) {
+            particlesArray.push(new Particle());
+        }
+
+        function animateConstellation() {
+            ctx.clearRect(0, 0, width, height);
+
+            // 更新並繪製粒子
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update();
+                particlesArray[i].draw();
+
+                // 粒子與粒子之間的連線
+                for (let j = i + 1; j < particlesArray.length; j++) {
+                    const dx = particlesArray[i].x - particlesArray[j].x;
+                    const dy = particlesArray[i].y - particlesArray[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < 120) {
+                        ctx.strokeStyle = `rgba(0, 198, 255, ${0.15 * (1 - distance / 120)})`;
+                        ctx.lineWidth = 0.8;
+                        ctx.beginPath();
+                        ctx.moveTo(particlesArray[i].x, particlesArray[i].y);
+                        ctx.lineTo(particlesArray[j].x, particlesArray[j].y);
+                        ctx.stroke();
+                    }
+                }
+
+                // 粒子與滑鼠游標之間的連線
+                if (mouse.x !== null && mouse.y !== null) {
+                    const mdx = particlesArray[i].x - mouse.x;
+                    const mdy = particlesArray[i].y - mouse.y;
+                    const mDistance = Math.sqrt(mdx * mdx + mdy * mdy);
+
+                    if (mDistance < mouse.radius) {
+                        ctx.strokeStyle = `rgba(255, 117, 140, ${0.4 * (1 - mDistance / mouse.radius)})`;
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(particlesArray[i].x, particlesArray[i].y);
+                        ctx.lineTo(mouse.x, mouse.y);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            requestAnimationFrame(animateConstellation);
+        }
+        animateConstellation();
+
+        // 2. 卡片 3D 傾斜與追光效果
+        const cards = document.querySelectorAll('.card');
+
+        cards.forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left; 
+                const y = e.clientY - rect.top;  
+
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateX = -((y - centerY) / centerY) * 10; 
+                const rotateY = ((x - centerX) / centerX) * 10;  
+
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+            });
+        });
+    </script>
+</body>
+</html>
